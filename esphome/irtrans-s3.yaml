@@ -1,0 +1,71 @@
+# ESP32-S3-DevKitC example firmware for IRTrans USB (OTG host).
+#
+# Wiring:
+# - UART USB-C port: programming / power / logs (CP210x)
+# - OTG USB-C port: IRTrans USB (use a powered USB hub — OTG usually has no VBUS)
+#
+# Copy secrets.yaml.example to secrets.yaml and fill Wi-Fi / API encryption.
+
+esphome:
+  name: irtrans-s3
+  friendly_name: IRTrans S3
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+# Required: USB_SERIAL_JTAG would claim GPIO19/20 used by USB OTG host.
+logger:
+  hardware_uart: UART0
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+  # Required for C++ CustomAPIDevice services (irtrans_learn / irtrans_transmit)
+  custom_services: true
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "IRTrans-S3 Fallback"
+    password: !secret fallback_password
+
+captive_portal:
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+    components: [irtrans_usb]
+
+usb_host:
+  enable_hubs: true
+  max_transfer_requests: 32
+
+usb_uart:
+  - type: ft23xx
+    vid: 0x0403
+    pid: 0xFC60
+    channels:
+      - id: irtrans_uart
+        # irserver Linux serial default for IRTrans devices
+        baud_rate: 38400
+        buffer_size: 1024
+        debug: false
+
+irtrans_usb:
+  uart_id: irtrans_uart
+  learn_timeout: 10s
+  status:
+    name: IRTrans Status
+  last_payload:
+    name: IRTrans Last Payload
+  connected:
+    name: IRTrans Connected
