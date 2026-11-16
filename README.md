@@ -41,7 +41,7 @@ usb_host:
   max_transfer_requests: 32
 
 usb_uart:
-  - type: ft23xx
+  - type: ft232
     vid: 0x0403
     pid: 0xFC60
     channels:
